@@ -41,7 +41,8 @@ STATE_DATA_FIRST_PULL_DOWN = 3
 STATE_DATA_PULL_UP = 4
 STATE_DATA_PULL_DOWN = 5
 
-# Global variable to make sure that the motor isn't currently in use
+# Setting up the motor. Also, a global variable to make sure that the motor isn't currently in use
+kit.motor1.throttle = 0
 motorInUse = False;
 
 # Returns a 1 or a 0. 1 Being no rain and 0 being rain.
