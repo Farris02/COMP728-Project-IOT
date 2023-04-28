@@ -143,7 +143,7 @@ if __name__ == "__main__":
         GPIO.cleanup()
 
 #Pushing notifications to User
-def sendnotifications();
+def sendnotifications():
 access_key = 'AKIA2ITYZKRINIP3IR4D'
 secret_key = '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'
 region = 'ap-southeast-2'
