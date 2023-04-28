@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import datetime
 import time
+import boto3
 
 raindropSensor = 11 # Pin 11 / GPIO17 is the pin for the raindrop sensor
 humitureSensor = 12 # Pin 12 / GPIO18 is the pin for the humiture sensor
@@ -140,3 +141,18 @@ if __name__ == "__main__":
         loop()
     except KeyboardInterrupt:
         GPIO.cleanup()
+
+#Pushing notifications to User
+def sendnotifications();
+access_key = 'AKIA2ITYZKRINIP3IR4D'
+secret_key = 'iVuO2MAUTjf/KcTdoI35uoPHnoEM6ruAplJP5Elk'
+region = 'ap-southeast-2'
+message = 'Please shut your windows'
+topic_arn = 'arn:aws:sns:ap-southeast-2:705701696592:Pushing-Notifications'
+
+client = boto3.client('sns',aws_access_key_id=access_key,aws_secret_access_key=>
+
+response = client.publish(TopicArn=topic_arn, Message=message)
+
+print(response) 
+
