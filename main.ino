@@ -10,6 +10,8 @@ int In1 = 8; // Pin 8 is the pin for the Motor Sensor
 int In2 = 9; // Pin 9 is the pin for the Motor Sensor
 int enablePin = 10; // Pin 10 is the pin for the Motor Sensor
 
+//int infraredValue; // 0 is not closed, 1 is closed.
+
 DHT dht = DHT(humitureSensor, DHT11);
 
 unsigned long startWaitRainTime = 0;
@@ -26,9 +28,10 @@ bool supposedWindowClosedStatus = false; // Is the window supposed to be closed.
 bool closeWindow() {
   // ADD CODE HERE
 
+  digitalWrite(enablePin, HIGH);
   analogWrite(In1, HIGH);
   analogWrite(In2, LOW);
-  digitalWrite(enablePin, HIGH); // set initial speed to 50% (128/255)
+
 
   for (int i=128;i<150;i++)
   {   digitalWrite(In1, HIGH);
@@ -53,7 +56,7 @@ bool openWindow() {
 
   analogWrite(In1, LOW);
   analogWrite(In2, HIGH);
-  digitalWrite(enablePin, HIGH); // set initial speed to 50% (128/255)
+  digitalWrite(enablePin, HIGH); 
 
   for (int i=128;i<150;i++)
   {   digitalWrite(In1, LOW);
@@ -126,8 +129,10 @@ void loop() {
   // Raindrop sensor Text Output
   if (raindropValue == 0) {
     Serial.print("Raining: No.");
+    Serial.println(raindropValue);
   } else {
     Serial.print("Raining: Yes.");
+    Serial.println(raindropValue);
   }
 
   // If the window was manually changed within the last 30 minutes, don't do normal actions.
@@ -140,9 +145,11 @@ void loop() {
       sendMessage("Raining. Closing Window.");
     } else if (raindropValue == 0 && wasRaining && startWaitRainTime == 0) { // Rain has stopped
       startWaitRainTime = currentTime;
-    } else if (raindropValue == 0 && wasRaining && startWaitRainTime < currentTime-(5*60*1000)) { // Has not rained for 5 minutes
+      Serial.print("I REACH THIS AREA");
+    } else if (wasRaining && startWaitRainTime < currentTime-(5*60*1000)) { // Has not rained for 5 minutes
       wasRaining = false;
       startWaitRainTime = 0;
+      Serial.print("I REACH THIS AREA 2");
       openWindow();
       sendMessage("Not raining. Opening Window.");
     }
@@ -216,5 +223,5 @@ void loop() {
   // Save the sensor data
   saveSensorData(raindropValue, temperatureValue, humidityValue);
 
-  delay(10000);
+  delay(5000);
 }
