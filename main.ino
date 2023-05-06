@@ -127,7 +127,7 @@ void loop() {
   }
 
   // Raindrop sensor Text Output
-  if (raindropValue == 0) {
+  if (raindropValue == 1) {
     Serial.print("Raining: No.");
     Serial.println(raindropValue);
   } else {
@@ -138,18 +138,20 @@ void loop() {
   // If the window was manually changed within the last 30 minutes, don't do normal actions.
   if (!manuallyChanged && (startWaitWindowChangeTime != 0 || startWaitWindowChangeTime < currentTime-(30*60*1000))) {
     // Regular Rain Logic
-    if (raindropValue != 0) { // Is raining
+    if (raindropValue != 1) { // Is raining
       wasRaining = true;
       startWaitRainTime = 0;
+      Serial.print("I REACH THIS AREA 1");
       closeWindow();
       sendMessage("Raining. Closing Window.");
-    } else if (raindropValue == 0 && wasRaining && startWaitRainTime == 0) { // Rain has stopped
+    } else if (raindropValue == 1 && wasRaining && startWaitRainTime == 0) { // Rain has stopped
       startWaitRainTime = currentTime;
-      Serial.print("I REACH THIS AREA");
-    } else if (wasRaining && startWaitRainTime < currentTime-(5*60*1000)) { // Has not rained for 5 minutes
+      Serial.print("I REACH THIS AREA 2");
+      Serial.println(raindropValue);
+    } else if (wasRaining && startWaitRainTime < currentTime-(10000) && startWaitRainTime != 0) { // Has not rained for 5 minutes
       wasRaining = false;
       startWaitRainTime = 0;
-      Serial.print("I REACH THIS AREA 2");
+      Serial.print("I REACH THIS AREA 3");
       openWindow();
       sendMessage("Not raining. Opening Window.");
     }
