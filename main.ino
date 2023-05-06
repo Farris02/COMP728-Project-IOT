@@ -23,6 +23,9 @@ unsigned long currentTime = millis();
 bool manuallyChanged = false;
 bool currentWindowClosedStatus = false; // Is the window currently closed.
 bool supposedWindowClosedStatus = false; // Is the window supposed to be closed.
+bool wasRaining = false;
+bool hasSentHumidityMessage = false;
+bool hasSentTemperatureMessage = false;
 
 // Closes the window. Returns true if successful. Else returns false.
 bool closeWindow() {
@@ -105,9 +108,6 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   currentTime = millis();
-  bool wasRaining = false;
-  bool hasSentHumidityMessage = false;
-  bool hasSentTemperatureMessage = false;
   float temperatureValue = dht.readTemperature(); // Temperature of area in celcius.
   float humidityValue = dht.readHumidity(); // Humidity of area in percentage.
   int infraredValue = digitalRead(infraredSensor); // Detects if the window is closed. 0 is not closed, 1 is closed.
