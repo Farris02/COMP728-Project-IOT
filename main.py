@@ -1,158 +1,220 @@
-import RPi.GPIO as GPIO
-import datetime
-import time
-import boto3
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
+#include <Arduino.h>
 
-raindropSensor = 11 # Pin 11 / GPIO17 is the pin for the raindrop sensor
-humitureSensor = 12 # Pin 12 / GPIO18 is the pin for the humiture sensor
-infraredSensor = 13 # Pin 13 / GPIO27 is the pin for the infrared sensor
+int raindropSensor = 11; // Pin 11 is the pin for the raindrop sensor
+int humitureSensor = 12; // Pin 12 is the pin for the humiture sensor
+int infraredSensor = 13; // Pin 13 is the pin for the infrared sensor
+int In1 = 8; // Pin 8 is the pin for the Motor Sensor
+int In2 = 9; // Pin 9 is the pin for the Motor Sensor
+int enablePin = 10; // Pin 10 is the pin for the Motor Sensor
 
-# Selects the mode for the board
-GPIO.setmode(GPIO.BOARD)
+DHT dht = DHT(humitureSensor, DHT11);
 
-# Sets up the inputs and outputs
-GPIO.setup(raindropSensor, GPIO.IN)
-GPIO.setup(infraredSensor, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+unsigned long startWaitRainTime = 0;
+unsigned long startWaitHumidityTime = 0;
+unsigned long startWaitTemperatureTime = 0;
+unsigned long startWaitWindowChangeTime = 0;
+unsigned long currentTime = millis();
 
-# Humiture Constants
-MAX_UNCHANGE_COUNT = 100
-STATE_INIT_PULL_DOWN = 1
-STATE_INIT_PULL_UP = 2
-STATE_DATA_FIRST_PULL_DOWN = 3
-STATE_DATA_PULL_UP = 4
-STATE_DATA_PULL_DOWN = 5
+bool manuallyChanged = false;
+bool currentWindowClosedStatus = false; // Is the window currently closed.
+bool supposedWindowClosedStatus = false; // Is the window supposed to be closed.
 
-# Returns a 1 or a 0. 1 Being no rain and 0 being rain.
-def raindropSensorResult():
-    return GPIO.input(raindropSensor)
+// Closes the window. Returns true if successful. Else returns false.
+bool closeWindow() {
+  // ADD CODE HERE
 
-# Returns the humdity, humidity decimals, temperature, temperature decimals, and checksum
-def humitureSensorResult():
-    # Sets up the humiture sensor detection each time the function is called
-    GPIO.setup(humitureSensor, GPIO.OUT)
-    GPIO.output(humitureSensor, GPIO.HIGH)
-    time.sleep(0.05)
-    GPIO.output(humitureSensor, GPIO.LOW)
-    time.sleep(0.02)
-    GPIO.setup(humitureSensor, GPIO.IN, GPIO.PUD_UP)
+  analogWrite(In1, HIGH);
+  analogWrite(In2, LOW);
+  digitalWrite(enablePin, HIGH); // set initial speed to 50% (128/255)
 
-    # Only breaks out of the loop if the state of the room stays the same for 100 loops
-    unchanged_count = 0
-    last = -1
-    data = []
-    while True:
-        current = GPIO.input(humitureSensor)
-        data.append(current)
-        if last != current:
-            unchanged_count = 0
-            last = current
-        else:
-            unchanged_count += 1
-            if unchanged_count > MAX_UNCHANGE_COUNT:
-                break
+  for (int i=128;i<150;i++)
+  {   digitalWrite(In1, HIGH);
+      digitalWrite(In2, LOW);
+      analogWrite(enablePin, i);
+      delay(200); //cheat way to increase the distance     
+      }
 
-    state = STATE_INIT_PULL_DOWN
+  analogWrite(In1, 0);
+  analogWrite(In2, 0);
+  digitalWrite(enablePin, LOW);
 
-    lengths = []
-    current_length = 0
+  Serial.print(" Window is closed!!!");
+  
 
-    for current in data:
-        current_length += 1
+  currentWindowClosedStatus = true;
+  supposedWindowClosedStatus = true;
+}
 
-        if state == STATE_INIT_PULL_DOWN:
-            if current == GPIO.LOW:
-                state = STATE_INIT_PULL_UP
-            else:
-                continue
-        if state == STATE_INIT_PULL_UP:
-            if current == GPIO.HIGH:
-                state = STATE_DATA_FIRST_PULL_DOWN
-            else:
-                continue
-        if state == STATE_DATA_FIRST_PULL_DOWN:
-            if current == GPIO.LOW:
-                state = STATE_DATA_PULL_UP
-            else:
-                continue
-        if state == STATE_DATA_PULL_UP:
-            if current == GPIO.HIGH:
-                current_length = 0
-                state = STATE_DATA_PULL_DOWN
-            else:
-                continue
-        if state == STATE_DATA_PULL_DOWN:
-            if current == GPIO.LOW:
-                lengths.append(current_length)
-                state = STATE_DATA_PULL_UP
-            else:
-                continue
-    if len(lengths) != 40:
-            # The humiture sensor is supposed to give 40 bits of information. Therefore, if the number of bits received is not 40, something has gone wrong.
-            return False
+// Opens the window. Returns true if successful. Else returns false.
+bool openWindow() {
 
-    shortest_pull_up = min(lengths)
-    longest_pull_up = max(lengths)
-    halfway = (longest_pull_up + shortest_pull_up) / 2
-    bits = []
-    the_bytes = []
-    byte = 0
+  analogWrite(In1, LOW);
+  analogWrite(In2, HIGH);
+  digitalWrite(enablePin, HIGH); // set initial speed to 50% (128/255)
 
-    for length in lengths:
-        bit = 0
-        if length > halfway:
-            bit = 1
-        bits.append(bit)
-    for i in range(0, len(bits)):
-        byte = byte << 1
-        if (bits[i]):
-            byte = byte | 1
-        else:
-            byte = byte | 0
-        if ((i + 1) % 8 == 0):
-            the_bytes.append(byte)
-            byte = 0
-    checksum = (the_bytes[0] + the_bytes[1] + the_bytes[2] + the_bytes[3]) & 0xFF
-    if the_bytes[4] != checksum:
-        # If the checksum does not match, then the data has been corrupted.
-        return False
+  for (int i=128;i<150;i++)
+  {   digitalWrite(In1, LOW);
+      digitalWrite(In2, HIGH);
+      analogWrite(enablePin, i);
+      delay(200); //cheat way to increase the distance     
+      }
 
-    return the_bytes
+  analogWrite(In1, 0);
+  analogWrite(In2, 0);
+  digitalWrite(enablePin, LOW);
 
-# Returns a 1 or a 0. 1 Being nothing detected and 0 being something detected.
-def infraredSensorResult():
-    return GPIO.input(infraredSensor)
+  Serial.print(" Window is opened!!!");
 
-def loop():
-    printIt = False
-    while True:
-        raining = raindropSensorResult()
-        humitureResult = humitureSensorResult()
-        infraredResult = infraredSensorResult()
-        currentTime = datetime.datetime.now()
-        if (humitureResult) :
-            humidity, humidityDecimal, temperature, temperatureDecimal, checkSum = humitureResult
-            printIt = True
-        if (printIt):
-            print("Window Closed: " + str("Yes" if infraredResult == 0 else "No") + ", Raining: " + str("Yes" if raining == 0 else "No") + ", Humidity: " + str(humidity) + "." + str(humidityDecimal) + "%, Temperature: " + str(temperature) + "." + str(temperatureDecimal) + "'C, Date and Time: " + str(currentTime))
-        time.sleep(1.1)
+  currentWindowClosedStatus = false;
+  supposedWindowClosedStatus = false;
+}
 
-if __name__ == "__main__":
-    try:
-        loop()
-    except KeyboardInterrupt:
-        GPIO.cleanup()
+// Sends the argument given as a message to the user's phone. Returns true if successful. Else returns false.
+bool sendMessage(String message) {
+  // ADD CODE HERE
+}
 
-#Pushing notifications to User
-def sendnotifications():
-access_key = 'AKIA2ITYZKRINIP3IR4D'
-secret_key = 'iVuO2MAUTjf/KcTdoI35uoPHnoEM6ruAplJP5Elk'
-region = 'ap-southeast-2'
-message = 'Please shut your windows'
-topic_arn = 'arn:aws:sns:ap-southeast-2:705701696592:Pushing-Notifications'
+// Saves the sensor data to an external storage location
+void saveSensorData(int rainData, float temperatureData, float humidityData) {
+  // ADD CODE HERE
+}
 
-client = boto3.client('sns',aws_access_key_id=access_key,aws_secret_access_key=>
+// Saves the time and date to an external storage location. Is called when the state of the window is manually changed.
+void saveManualWindowChangeData(bool currentWindowIsClosedStatus) {
+  // ADD CODE HERE
+}
 
-response = client.publish(TopicArn=topic_arn, Message=message)
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(raindropSensor, INPUT);
+  Serial.begin(9600);
+  dht.begin();
 
-print(response) 
+  //motor setup
+  pinMode(In1, OUTPUT); //IN1
+  pinMode(In2, OUTPUT); //IN2
+  pinMode(enablePin, OUTPUT); //Enable Pin
+}
 
+void loop() {
+  // put your main code here, to run repeatedly:
+  currentTime = millis();
+  bool wasRaining = false;
+  bool hasSentHumidityMessage = false;
+  bool hasSentTemperatureMessage = false;
+  float temperatureValue = dht.readTemperature(); // Temperature of area in celcius.
+  float humidityValue = dht.readHumidity(); // Humidity of area in percentage.
+  int infraredValue = digitalRead(infraredSensor); // Detects if the window is closed. 0 is not closed, 1 is closed.
+  int raindropValue = digitalRead(raindropSensor); // Detects if it is raining. 0 is not raining, 1 is raining.
+
+  // Humiture Sensor Text Output
+  Serial.print("\nTemperature: ");
+  Serial.print(temperatureValue);
+  Serial.print(", Humidity: ");
+  Serial.print(humidityValue);
+
+  // IR Sensor Text Output
+  if (infraredValue == 0) {
+    Serial.print(", Window Closed: No, ");
+  } else {
+    Serial.print(", Window Closed: Yes, ");
+  }
+
+  // Raindrop sensor Text Output
+  if (raindropValue == 0) {
+    Serial.print("Raining: No.");
+  } else {
+    Serial.print("Raining: Yes.");
+  }
+
+  // If the window was manually changed within the last 30 minutes, don't do normal actions.
+  if (!manuallyChanged && (startWaitWindowChangeTime != 0 || startWaitWindowChangeTime < currentTime-(30*60*1000))) {
+    // Regular Rain Logic
+    if (raindropValue != 0) { // Is raining
+      wasRaining = true;
+      startWaitRainTime = 0;
+      closeWindow();
+      sendMessage("Raining. Closing Window.");
+    } else if (raindropValue == 0 && wasRaining && startWaitRainTime == 0) { // Rain has stopped
+      startWaitRainTime = currentTime;
+    } else if (raindropValue == 0 && wasRaining && startWaitRainTime < currentTime-(5*60*1000)) { // Has not rained for 5 minutes
+      wasRaining = false;
+      startWaitRainTime = 0;
+      openWindow();
+      sendMessage("Not raining. Opening Window.");
+    }
+    
+    // Regular Humiture Logic
+    if (!hasSentHumidityMessage) {
+      if (humidityValue > 90) { // If the humidity is greater than 90% send a message.
+        sendMessage("Current Humidity greater than 90%! Please turn on your air conditioning.");
+        startWaitHumidityTime = currentTime;
+        hasSentHumidityMessage = true;
+      } else if (humidityValue < 10) { // If the humidity is less than 10% send a message.
+        sendMessage("Current Humidity less than 10%! Please turn on your air conditioning.");
+        startWaitHumidityTime = currentTime;
+        hasSentHumidityMessage = true;
+      }
+    } else if (startWaitHumidityTime < currentTime-(5*60*1000)) { // If a message has been sent, and it's been 5 minutes since the last check.
+      if (humidityValue < 85 && humidityValue > 15) { // If the humidity is normal, reset values.
+        hasSentHumidityMessage = false;
+        startWaitHumidityTime = 0;
+      } else { // If humidity is not normal, check again in 5 minutes.
+        startWaitHumidityTime = currentTime;
+      }
+    }
+
+    // Regular Temperature Logic
+    if (!hasSentTemperatureMessage) {
+      if (temperatureValue > 35) { // If the temperature is greater than 90% send a message.
+        sendMessage("Current Temperature greater than 30 Degrees Celcius! Please turn on your air conditioning.");
+        startWaitTemperatureTime = currentTime;
+        hasSentTemperatureMessage = true;
+      } else if (temperatureValue < 5) { // If the temperature is less than 10% send a message.
+        sendMessage("Current Temperature less than 5 Degrees Celcius! Please turn on your air conditioning.");
+        startWaitTemperatureTime = currentTime;
+        hasSentTemperatureMessage = true;
+      }
+    } else if (startWaitTemperatureTime < currentTime-(5*60*1000)) { // If a message has been sent, and it's been 5 minutes since the last check.
+      if (temperatureValue < 30 && temperatureValue > 10) { // If the temperature is normal, reset values.
+        hasSentTemperatureMessage = false;
+        startWaitTemperatureTime = 0;
+      } else { // If temperature is not normal, check again in 5 minutes.
+        startWaitTemperatureTime = currentTime;
+      }
+    }
+
+    // After 30 minutes of having been manually changed, return to normal functionality
+    if (manuallyChanged && startWaitWindowChangeTime < currentTime-(30*60*1000)) {
+      manuallyChanged = false;
+      if (supposedWindowClosedStatus) {
+        closeWindow();
+      } else {
+        openWindow();
+      }
+    }
+
+    // Manual Open/Close Detection
+    if (currentWindowClosedStatus != supposedWindowClosedStatus) {
+      manuallyChanged = true;
+      startWaitWindowChangeTime = currentTime;
+      saveManualWindowChangeData(currentWindowClosedStatus);
+    }
+  }
+
+  // Adaptation Logic
+  /*
+  Data from the last 7 days that the window has been manually changed is checked.
+  If the window has been opened/closed at a specific time consistently for the last 7 days, then open / close the window at the appropriate time.
+  The specific time that the window has been opened/closed has a grace period of 30 minutes.
+  E.g Always opening the window between 9:30 and 10:00 for 7 days will still activate this part of the code.
+  */
+
+  // Save the sensor data
+  saveSensorData(raindropValue, temperatureValue, humidityValue);
+
+  delay(10000);
+}
