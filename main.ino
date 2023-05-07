@@ -2,7 +2,7 @@
 #include <DHT.h>
 #include <DHT_U.h>
 #include <Arduino.h>
-#include <WiFi.h>
+/*#include <WiFi.h>
 #include <PubSubClient.h>
 #include <AWS_IOT.h>
 #include <WiFiClientSecure.h>
@@ -10,8 +10,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <NTPClient.h>
-
-// Wifi name and password.
+*/
+/*// Wifi name and password.
 const char* ssid = "Nakasha";
 const char* password = "Baghdad68";
 
@@ -89,7 +89,7 @@ yd+F1UZkL5+F3ZkOIMQWmfVp6x5MaPsdbb3UyaVRzTLF8kv7jgHvD1yemn7bZWjn
 kp5X5EhPhxMFMdTCHxiGYqQnTv1uyH8IMFX/OFf9tuAinzf7oMoTAPctf4vL5tjk
 qcIGwzwbdVXd+wcYgqPPeHQhMKQxgobh9HA7QaN/H9hTJ7U2XWrHRGOK/hFK1Q==
 \n-----END CERTIFICATE-----\n";
-
+*/
 // Pins.
 int raindropSensor = 11; // Pin 11 is the pin for the raindrop sensor.
 int humitureSensor = 12; // Pin 12 is the pin for the humiture sensor.
@@ -99,20 +99,16 @@ int In2 = 9; // Pin 9 is the pin for the motor.
 int enablePin = 10; // Pin 10 is the pin for the motor.
 
 // Setting up the save data functionality.
-import processing.serial.*;
-Serial mySerial;
-PrintWriter sensorDataOutput;
-PrintWriter manualChangeDataOutput;
-String sensorDataFile = "SensorData_Day_";
-String manualChangeDataFile = "ManualChangeData_Day_";
+String sensorDataFile = "2SensorData_Day_";
+String manualChangeDataFile = "3ManualChangeData_Day_";
 
 // Setting up the humiture sensor.
 DHT dht = DHT(humitureSensor, DHT11);
 
-// Setting up the push notifications.
+/*// Setting up the push notifications.
 WiFiClientSecure wifiClient;
 AWS_IOT awsIot(wifiClient);
-
+*/
 // Global Variables.
 unsigned long startWaitRainTime = 0;
 unsigned long startWaitHumidityTime = 0;
@@ -205,7 +201,7 @@ bool openWindow() {
 
 // Sends the argument given as a message to the user's phone. Returns true if successful. Else returns false.
 bool sendMessage(String message) {
-  WiFiClientSecure snsClient;
+/*  WiFiClientSecure snsClient;
   snsClient.setCACert(awsCertCA);
   snsClient.setCertificate(awsCertCRT);
   snsClient.setPrivateKey(awsCertPrivateKey);
@@ -226,37 +222,39 @@ bool sendMessage(String message) {
     return true;
   } else {
     return false;
-  }
+  }*/
 }
 
 // Saves the sensor data to an external text file.
 void saveSensorData(int rainData, float temperatureData, float humidityData) {
-  sensorDataOutput.print("Temperature: ");
-  sensorDataOutput.print(temperatureValue);
-  sensorDataOutput.print(", Humidity: ");
-  sensorDataOutput.print(humidityValue);
+  String outputString = "0";
+  outputString.concat("Temperature: ");
+  outputString.concat(temperatureValue);
+  outputString.concat(", Humidity: ");
+  outputString.concat(humidityValue);
   if (rainData == 0) {
-    sensorDataOutput.print(", Raining: Yes");
+    outputString.concat(", Raining: Yes");
   } else {
-    sensorDataOutput.print(", Raining: No");
+    outputString.concat(", Raining: No");
   }
-  sensorDataOutput.print(", Time since start: ");
-  sensorDataOutput.println(currentTime);
+  outputString.concat(", Time since start: ");
+  outputString.concat(currentTime);
 
-  sensorDataOutput.flush();
+  Serial.println(outputString);
 }
 
 // Saves the time and date to an external text file. Is called when the state of the window is manually changed.
 void saveManualWindowChangeData(bool currentWindowIsClosedStatus) {
+  String outputString = "1";
   if (!currentWindowIsClosedStatus) {
-    manualChangeDataOutput.print("Window Closed: No");
+    outputString.concat("Window Closed: No");
   } else {
-    manualChangeDataOutput.print("Window Closed: Yes");
+    outputString.concat("Window Closed: Yes");
   }
-  manualChangeDataOutput.print(", Time since start: ");
-  manualChangeDataOutput.println(currentTime);
+  outputString.concat(", Time since start: ");
+  outputString.concat(currentTime);
 
-  manualChangeDataOutput.flush();
+  Serial.println(outputString);
 }
 
 void setup() {
@@ -275,10 +273,8 @@ void setup() {
   manualChangeDataFile.concat(dayCount);
   sensorDataFile.concat(".txt");
   manualChangeDataFile.concat(".txt");
-  sensorDataOutput = createWriter(sensorDataFile);
-  manualChangeDataOutput = createWriter(manualChangeDataFile);
 
-  // Push notification setup.
+/*  // Push notification setup.
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -291,7 +287,7 @@ void setup() {
     delay(1000);
   }
   // Subscribe to the MQTT topic.
-  awsIot.subscribe(awsTopic);
+  awsIot.subscribe(awsTopic);*/
 }
 
 void loop() {
@@ -303,27 +299,27 @@ void loop() {
   raindropValue = digitalRead(raindropSensor); // Detects if it is raining. 1 is not raining, 0 is raining.
   int currentWindowPeriod = int(((currentTime % (24*60*60*1000)) / (30*60*1000)));
 
-  // Humiture Sensor Text Output.
+  /*// Humiture Sensor Text Output.
   Serial.print("Temperature: ");
   Serial.print(temperatureValue);
   Serial.print(", Humidity: ");
-  Serial.print(humidityValue);
+  Serial.print(humidityValue);*/
 
   // IR Sensor Text Output. Also sets currentWindowClosedStatus.
   if (infraredValue == 1) {
-    Serial.print(", Window Closed: No");
+    //Serial.print(", Window Closed: No");
     currentWindowClosedStatus = false;
   } else {
-    Serial.print(", Window Closed: Yes");
+    //Serial.print(", Window Closed: Yes");
     currentWindowClosedStatus = true;
   }
-
+/*
   // Raindrop sensor Text Output.
   if (raindropValue == 0) {
     Serial.println(", Raining: Yes.");
   } else {
     Serial.println(", Raining: No.");
-  }
+  }*/
 
   // Updates the current date if a day has passed, and updates the save data file.
   if ((currentTime % (24*60*60*1000)) > 0 && (currentTime % (24*60*60*1000)) < 10000 && currentTime > (whenDayCountLastUpdated+(12*60*60*1000))) {
@@ -332,22 +328,24 @@ void loop() {
     whenDayCountLastUpdated = currentTime;
 
     // Updates which file to be saved to.
-    sensorDataOutput.close();
-    manualChangeDataOutput.close();
-    sensorDataFile = "SensorData_Day_";
-    manualChangeDataFile ="ManualChangeData_Day_";
+    sensorDataFile = "2SensorData_Day_";
+    manualChangeDataFile ="3ManualChangeData_Day_";
     sensorDataFile.concat(dayCount);
     manualChangeDataFile.concat(dayCount);
     sensorDataFile.concat(".txt");
     manualChangeDataFile.concat(".txt");
-    sensorDataOutput = createWriter(sensorDataFile);
-    manualChangeDataOutput = createWriter(manualChangeDataFile);
+    Serial.println(sensorDataFile);
+    Serial.println(manualChangeDataFile);
 
     // Shifts all the data in each day by 1, forgetting any data later than 7 days ago.
-    for (int i = 6; i > 0; i--) {
-      days[i] = days[i-1];
+    for (int a = 6; a > 0; a--) {
+      for (int b = 0; b < 72; b++) {
+        days[a][b] = days[a-1][b];
+      }
     }
-    days[0] = bool emptyArray[72];
+    for (int i = 0; i < 72; i++) {
+        days[0][i] = NULL;
+    }
 
     // Resets the "alreadyChangedWindowState" variable to -1, so that each window period can be checked again for permanent adaptation changes.
     alreadyChangedWindowState = -1;
@@ -430,7 +428,7 @@ void loop() {
       days[0][currentWindowPeriod] = currentWindowClosedStatus;
     }
   }
-
+  /*
   // Send push notification to SNS topic.
   if (awsIot.available()) {
     char messageBuf[256];
@@ -438,24 +436,25 @@ void loop() {
     messageBuf[messageSize] = '\0';  
     sendMessage(String(messageBuf));
   }
-
+  */
   // If there is a manual change at a specific period of time consistantly for 7 days, add it to the permanent change list at the appropriate time.
   for (int i = 0; i < 72; i++) {
     // Keeps track of the periods before and after the current period.
-    periodBefore = i-1;
-    periodAfter = i+1;
+    int periodBefore = i-1;
+    int periodAfter = i+1;
     if (periodBefore < 0) {
       periodBefore = 71;
     }
     if (periodAfter > 71) {
       periodAfter = 0;
     }
-  
-    if (day[6][i] == true) {
-      int closeAtThisTime = 0;
+
+    int closeAtThisTime = 0;
+    int openAtThisTime = 0;
+    if (days[6][i] == true) {
       // Checks the time periods before and after the current time period to see if there's an adaptation pattern.
       for (int checkDay = 0; checkDay <= 5; checkDay++) {
-        if (day[dayCheck][i] == true || day[dayCheck][periodBefore] == true || day[dayCheck][periodAfter] == true) {
+        if (days[checkDay][i] == true || days[checkDay][periodBefore] == true || days[checkDay][periodAfter] == true) {
           closeAtThisTime++;
         }
       }
@@ -463,15 +462,14 @@ void loop() {
       if (closeAtThisTime >= 6) {
         permanentChange[i] = true;
       }
-    } else if (day[6][i] == false) 
-    int openAtThisTime = 0;
+    } else if (days[6][i] == false) 
       for (int checkDay = 0; checkDay <= 5; checkDay++) {
-        if (day[dayCheck][i] == true || day[dayCheck][periodBefore] == true || day[dayCheck][periodAfter] == true) {
-          closeAtThisTime++;
+        if (days[checkDay][i] == true || days[checkDay][periodBefore] == true || days[checkDay][periodAfter] == true) {
+          openAtThisTime++;
         }
       }
       // If all the time periods checked are false, add it to the permanentChange array.
-      if (closeAtThisTime >= 6) {
+      if (openAtThisTime >= 6) {
         permanentChange[i] = false;
       }
   }
