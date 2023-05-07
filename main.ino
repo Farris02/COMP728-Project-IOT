@@ -3,89 +3,108 @@
 #include <DHT_U.h>
 #include <Arduino.h>
 
+// Pins
 int raindropSensor = 11; // Pin 11 is the pin for the raindrop sensor
 int humitureSensor = 12; // Pin 12 is the pin for the humiture sensor
 int infraredSensor = 13; // Pin 13 is the pin for the infrared sensor
-int In1 = 8; // Pin 8 is the pin for the Motor Sensor
-int In2 = 9; // Pin 9 is the pin for the Motor Sensor
-int enablePin = 10; // Pin 10 is the pin for the Motor Sensor
+int In1 = 8; // Pin 8 is the pin for the motor
+int In2 = 9; // Pin 9 is the pin for the motor
+int enablePin = 10; // Pin 10 is the pin for the motor
 
+// Setting up the save data functionality
+import processing.serial.*;
+Serial mySerial;
+PrintWriter sensorDataOutput;
+PrintWriter manualChangeDataOutput;
+String sensorDataFile = "SensorData_Day_";
+String manualChangeDataFile = "ManualChangeData_Day_";
+
+// Setting up the humiture sensor
 DHT dht = DHT(humitureSensor, DHT11);
 
+// Global Variables
 unsigned long startWaitRainTime = 0;
 unsigned long startWaitHumidityTime = 0;
 unsigned long startWaitTemperatureTime = 0;
 unsigned long startWaitWindowChangeTime = 0;
-unsigned long currentTime = millis();
-
-bool manuallyChanged = false;
+unsigned long currentTime = millis(); // Current time in milliseconds since the start of the program.
+bool manuallyChanged = false; // Has the status of the window (Opened or Closed) been changed manually by the user.
 bool currentWindowClosedStatus = false; // Is the window currently closed.
 bool supposedWindowClosedStatus = false; // Is the window supposed to be closed.
-bool wasRaining = false;
-bool hasSentHumidityMessage = false;
-bool hasSentTemperatureMessage = false;
-
+bool wasRaining = false; // Was is raining.
+bool hasSentHumidityMessage = false; // Has a message about humidity levels already been sent.
+bool hasSentTemperatureMessage = false; // Has a message about temperature levels already been sent.
+float temperatureValue; // Temperature of area in celcius.
+float humidityValue; // Humidity of area in percentage.
 int infraredValue; // 1 is not closed, 0 is closed.
+int raindropValue; // Detects if it is raining. 1 is not raining, 0 is raining.
+int dayCount = 0; // Keeps track of the number of days passed since the start of the program.
+unsigned long whenDayCountLastUpdated = 0; // When the dayCount was last updated.
 
 // Closes the window. Returns true if successful. Else returns false.
 bool closeWindow() {
-  // ADD CODE HERE
+  // The value to be returned
+  bool returnValue = false;
 
+  // Sets up the motor
   digitalWrite(enablePin, HIGH);
   analogWrite(In1, HIGH);
   analogWrite(In2, LOW);
 
   if(!currentWindowClosedStatus || currentWindowClosedStatus && infraredValue == 1){
+    // Turns on the motor for a period of time
     for (int i=128;i<150;i++)
     {   digitalWrite(In1, HIGH);
         digitalWrite(In2, LOW);
         analogWrite(enablePin, i);
-        delay(200); //cheat way to increase the distance     
+        delay(200);     
     }
 
+    // Turns off the motor
     analogWrite(In1, 0);
     analogWrite(In2, 0);
     digitalWrite(enablePin, LOW);
-    Serial.print(" Window is closed!!!");
 
-    currentWindowClosedStatus = true;
-    supposedWindowClosedStatus = true;
-
-  } else {
-      Serial.print(" Window is already closed!!!");
-    currentWindowClosedStatus = true;
-    supposedWindowClosedStatus = true;
+    returnValue = true;
   }
+  
+  currentWindowClosedStatus = true;
+  supposedWindowClosedStatus = true;
+
+  return returnValue;
 }
 
 // Opens the window. Returns true if successful. Else returns false.
 bool openWindow() {
+  // The value to be returned
+  bool returnValue = false;
 
+  // Sets up the motor
   digitalWrite(enablePin, HIGH);
   analogWrite(In2, HIGH); 
   analogWrite(In1, LOW);
 
   if(!currentWindowClosedStatus || currentWindowClosedStatus && infraredValue == 0){
+    // Turns on the motor for a period of time
     for (int i=128;i<150;i++)
       {   digitalWrite(In1, LOW);
           digitalWrite(In2, HIGH);
           analogWrite(enablePin, i);
-          delay(200); //cheat way to increase the distance     
+          delay(200);  
       }
 
+    // Turns off the motor
     analogWrite(In1, 0);
     analogWrite(In2, 0);
     digitalWrite(enablePin, LOW);
-    
-    Serial.print(" Window is opened!!!");
-    currentWindowClosedStatus = false;
-    supposedWindowClosedStatus = false;
-    
-  } else {
-    Serial.print(" Window is already opened!!!");
-    currentWindowClosedStatus = false;
-    supposedWindowClosedStatus = false;
+
+    returnValue = true;
   }
+
+  currentWindowClosedStatus = false;
+  supposedWindowClosedStatus = false;
+
+  return returnValue;
 }
 
 // Sends the argument given as a message to the user's phone. Returns true if successful. Else returns false.
@@ -95,12 +114,32 @@ bool sendMessage(String message) {
 
 // Saves the sensor data to an external storage location
 void saveSensorData(int rainData, float temperatureData, float humidityData) {
-  // ADD CODE HERE
+  sensorDataOutput.print("Temperature: ");
+  sensorDataOutput.print(temperatureValue);
+  sensorDataOutput.print(", Humidity: ");
+  sensorDataOutput.print(humidityValue);
+  if (rainData == 0) {
+    sensorDataOutput.print(", Raining: Yes");
+  } else {
+    sensorDataOutput.print(", Raining: No");
+  }
+  sensorDataOutput.print(", Time since start: ");
+  sensorDataOutput.println(currentTime);
+
+  sensorDataOutput.flush();
 }
 
 // Saves the time and date to an external storage location. Is called when the state of the window is manually changed.
 void saveManualWindowChangeData(bool currentWindowIsClosedStatus) {
-  // ADD CODE HERE
+  if (!currentWindowIsClosedStatus) {
+    manualChangeDataOutput.print("Window Closed: No");
+  } else {
+    manualChangeDataOutput.print("Window Closed: Yes");
+  }
+  manualChangeDataOutput.print(", Time since start: ");
+  manualChangeDataOutput.println(currentTime);
+
+  manualChangeDataOutput.flush();
 }
 
 void setup() {
@@ -109,60 +148,92 @@ void setup() {
   Serial.begin(9600);
   dht.begin();
 
-  //motor setup
-  pinMode(In1, OUTPUT); //IN1
-  pinMode(In2, OUTPUT); //IN2
-  pinMode(enablePin, OUTPUT); //Enable Pin
+  // Motor setup
+  pinMode(In1, OUTPUT); // IN1
+  pinMode(In2, OUTPUT); // IN2
+  pinMode(enablePin, OUTPUT); // Enable Pin
+
+  // Save data functionality setup
+  sensorDataFile.concat(dayCount);
+  manualChangeDataFile.concat(dayCount);
+  sensorDataFile.concat(".txt");
+  manualChangeDataFile.concat(".txt");
+  sensorDataOutput = createWriter(sensorDataFile);
+  manualChangeDataOutput = createWriter(manualChangeDataFile);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  currentTime = millis();
-  float temperatureValue = dht.readTemperature(); // Temperature of area in celcius.
-  float humidityValue = dht.readHumidity(); // Humidity of area in percentage.
+  currentTime = millis(); // Current time in milliseconds since the start of the program.
+  temperatureValue = dht.readTemperature(); // Temperature of area in celcius.
+  humidityValue = dht.readHumidity(); // Humidity of area in percentage.
   infraredValue = digitalRead(infraredSensor); // Detects if the window is closed. 1 is not closed, 0 is closed.
-  int raindropValue = digitalRead(raindropSensor); // Detects if it is raining. 1 is not raining, 0 is raining.
+  raindropValue = digitalRead(raindropSensor); // Detects if it is raining. 1 is not raining, 0 is raining.
 
   // Humiture Sensor Text Output
-  Serial.print("\nTemperature: ");
+  Serial.print("Temperature: ");
   Serial.print(temperatureValue);
   Serial.print(", Humidity: ");
   Serial.print(humidityValue);
 
-  // IR Sensor Text Output
+  // IR Sensor Text Output. Also sets currentWindowClosedStatus.
   if (infraredValue == 1) {
-    Serial.print(", Window Closed: No, ");
-    Serial.print(infraredValue);
+    Serial.print(", Window Closed: No");
+    currentWindowClosedStatus = false;
   } else {
-    Serial.print(", Window Closed: Yes, ");
-    Serial.print(infraredValue);
+    Serial.print(", Window Closed: Yes");
+    currentWindowClosedStatus = true;
   }
 
   // Raindrop sensor Text Output
-  if (raindropValue == 1) {
-    Serial.print(" Raining: No.");
-    Serial.println(raindropValue);
+  if (raindropValue == 0) {
+    Serial.println(", Raining: Yes.");
   } else {
-    Serial.print(" Raining: Yes.");
+    Serial.println(", Raining: No.");
   }
 
+  // Updates the current date if a day has passed, and updates the save data file
+  if ((currentTime % (24*60*60*1000)) > 0 && (currentTime % (24*60*60*1000)) < 10000 && currentTime > (whenDayCountLastUpdated+(12*60*60*1000))) {
+    // Increases the day count
+    dayCount++;
+    whenDayCountLastUpdated = currentTime;
+
+    // Updates the file to be saved to
+    sensorDataOutput.close();
+    manualChangeDataOutput.close();
+    sensorDataFile = "SensorData_Day_";
+    manualChangeDataFile ="ManualChangeData_Day_";
+    sensorDataFile.concat(dayCount);
+    manualChangeDataFile.concat(dayCount);
+    sensorDataFile.concat(".txt");
+    manualChangeDataFile.concat(".txt");
+    sensorDataOutput = createWriter(sensorDataFile);
+    manualChangeDataOutput = createWriter(manualChangeDataFile);
+  }
+
+  // After 30 minutes of having been manually changed, return to normal functionality
+  if (manuallyChanged && startWaitWindowChangeTime < currentTime-(30*60*1000)) {
+    manuallyChanged = false;
+    if (supposedWindowClosedStatus) {
+      closeWindow();
+    } else {
+      openWindow();
+    }
+  }
+  
   // If the window was manually changed within the last 30 minutes, don't do normal actions.
   if (!manuallyChanged && (startWaitWindowChangeTime != 0 || startWaitWindowChangeTime < currentTime-(30*60*1000))) {
     // Regular Rain Logic
-    if (raindropValue != 1) { // Is raining
+    if (raindropValue == 0) { // Is raining
       wasRaining = true;
       startWaitRainTime = 0;
-      Serial.print("I REACH THIS AREA 1");
       closeWindow();
       sendMessage("Raining. Closing Window.");
     } else if (raindropValue == 1 && wasRaining && startWaitRainTime == 0) { // Rain has stopped
       startWaitRainTime = currentTime;
-      Serial.print("I REACH THIS AREA 2 ");
-      Serial.println(raindropValue);
-    } else if (wasRaining && startWaitRainTime < currentTime-(10000) && startWaitRainTime != 0) { // Has not rained for 5 minutes
+    } else if (raindropValue == 1 && wasRaining && startWaitRainTime < currentTime-(10000) && startWaitRainTime != 0) { // Has not rained for 5 minutes
       wasRaining = false;
       startWaitRainTime = 0;
-      Serial.print("I REACH THIS AREA 3");
       openWindow();
       sendMessage("Not raining. Opening Window.");
     }
@@ -207,18 +278,8 @@ void loop() {
       }
     }
 
-    // After 30 minutes of having been manually changed, return to normal functionality
-    if (manuallyChanged && startWaitWindowChangeTime < currentTime-(30*60*1000)) {
-      manuallyChanged = false;
-      if (supposedWindowClosedStatus) {
-        closeWindow();
-      } else {
-        openWindow();
-      }
-    }
-
     // Manual Open/Close Detection
-    if (currentWindowClosedStatus != supposedWindowClosedStatus) {
+    if (currentWindowClosedStatus != supposedWindowClosedStatus && !manuallyChanged) {
       manuallyChanged = true;
       startWaitWindowChangeTime = currentTime;
       saveManualWindowChangeData(currentWindowClosedStatus);
