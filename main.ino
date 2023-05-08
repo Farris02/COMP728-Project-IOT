@@ -161,6 +161,10 @@ void setup() {
   pinMode(In1, OUTPUT); // IN1.
   pinMode(In2, OUTPUT); // IN2.
   pinMode(enablePin, OUTPUT); // Enable Pin.
+
+  // Resets the save file names
+  Serial.println(sensorDataFile);
+  Serial.println(manualChangeDataFile);
 }
 
 void loop() {
