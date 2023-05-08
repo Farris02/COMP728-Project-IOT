@@ -36,11 +36,6 @@ int infraredValue; // 1 is not closed, 0 is closed.
 int raindropValue; // Detects if it is raining. 1 is not raining, 0 is raining.
 int dayCount = 0; // Keeps track of the number of days passed since the start of the program.
 
-// Constants
-const unsigned long ADAY = 24*60*60*1000;
-const unsigned long HALFANHOUR = 30*60*1000;
-const unsigned long FIVEMINUTES = 5*60*1000;
-
 // Day array
 bool days[7][72]; // Array of 20 minute periods for 7 days.
 bool permanentChange[72]; // The array of permanent window adaptations.
@@ -181,7 +176,7 @@ void loop() {
   humidityValue = dht.readHumidity(); // Humidity of area in percentage.
   infraredValue = digitalRead(infraredSensor); // Detects if the window is closed. 1 is not closed, 0 is closed.
   raindropValue = digitalRead(raindropSensor); // Detects if it is raining. 1 is not raining, 0 is raining.
-  int currentWindowPeriod = int(((currentTime % ADAY) / HALFANHOUR));
+  int currentWindowPeriod = int(((currentTime % (unsigned long)(24*60*60*1000)) / (unsigned long)(30*60*1000)));
 
   // Sets currentWindowClosedStatus.
   if (infraredValue == 1) {
@@ -191,7 +186,7 @@ void loop() {
   }
 
   // Updates the current date if a day has passed, and updates the save data file.
-  if (int(currentTime / ADAY) > dayCount) {
+  if (int(currentTime / (unsigned long)(24*60*60*1000)) > dayCount) {
     // Increases the day count.
     dayCount++;
 
@@ -220,7 +215,7 @@ void loop() {
   }
 
   // After 30 minutes of having been manually changed, return to normal functionality.
-  if (manuallyChanged && startWaitWindowChangeTime < currentTime-HALFANHOUR) {
+  if (manuallyChanged && startWaitWindowChangeTime < currentTime-(unsigned long)(30*60*1000)) {
     manuallyChanged = false;
     if (supposedWindowClosedStatus) {
       closeWindow();
@@ -230,7 +225,7 @@ void loop() {
   }
   
   // If the window was manually changed within the last 30 minutes, don't do normal actions.
-  if (!manuallyChanged && (startWaitWindowChangeTime != 0 || startWaitWindowChangeTime < currentTime-HALFANHOUR)) {
+  if (!manuallyChanged && (startWaitWindowChangeTime != 0 || startWaitWindowChangeTime < currentTime-(unsigned long)(30*60*1000))) {
     // Regular Rain Logic.
     if (raindropValue == 0) { // Is raining.
       wasRaining = true;
@@ -239,7 +234,7 @@ void loop() {
       sendMessage("Raining. Closing Window.");
     } else if (raindropValue == 1 && wasRaining && startWaitRainTime == 0) { // Rain has stopped.
       startWaitRainTime = currentTime;
-    } else if (raindropValue == 1 && wasRaining && startWaitRainTime < currentTime-FIVEMINUTES && startWaitRainTime != 0) { // Has not rained for 5 minutes.
+    } else if (raindropValue == 1 && wasRaining && startWaitRainTime < currentTime-(unsigned long)(5*60*1000) && startWaitRainTime != 0) { // Has not rained for 5 minutes.
       wasRaining = false;
       startWaitRainTime = 0;
       openWindow();
@@ -257,7 +252,7 @@ void loop() {
         startWaitHumidityTime = currentTime;
         hasSentHumidityMessage = true;
       }
-    } else if (startWaitHumidityTime < currentTime-FIVEMINUTES) { // If a message has been sent, and it's been 5 minutes since the last check.
+    } else if (startWaitHumidityTime < currentTime-(unsigned long)(5*60*1000)) { // If a message has been sent, and it's been 5 minutes since the last check.
       if (humidityValue < 85 && humidityValue > 15) { // If the humidity is normal, reset values.
         hasSentHumidityMessage = false;
         startWaitHumidityTime = 0;
@@ -277,7 +272,7 @@ void loop() {
         startWaitTemperatureTime = currentTime;
         hasSentTemperatureMessage = true;
       }
-    } else if (startWaitTemperatureTime < currentTime-FIVEMINUTES) { // If a message has been sent, and it's been 5 minutes since the last check.
+    } else if (startWaitTemperatureTime < currentTime-(unsigned long)(5*60*1000)) { // If a message has been sent, and it's been 5 minutes since the last check.
       if (temperatureValue < 30 && temperatureValue > 10) { // If the temperature is normal, reset values.
         hasSentTemperatureMessage = false;
         startWaitTemperatureTime = 0;
