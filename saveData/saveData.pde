@@ -9,7 +9,7 @@ String manualChangeDataFile = "../ManualChangeData_Day_0.txt";
 String sendNotifFile = "../sendNotifications.txt";
 
 void setup() {
-   mySerial = new Serial(this, "COM1", 9600);
+   mySerial = new Serial(this, Serial.list()[0], 9600);
    sensorDataOutput = createWriter(sensorDataFile);
    manualChangeDataOutput = createWriter(manualChangeDataFile);
    sendNotifOutput = createWriter(sendNotifFile);
