@@ -39,7 +39,7 @@ int dayCount = 0; // Keeps track of the number of days passed since the start of
 // Constants
 const unsigned long ADAY = 24*60*60*1000;
 const unsigned long HALFANHOUR = 30*60*1000;
-const unsigned long FIVEMINUTES = 24*60*60*1000;
+const unsigned long FIVEMINUTES = 5*60*1000;
 
 // Day array
 bool days[7][72]; // Array of 20 minute periods for 7 days.
