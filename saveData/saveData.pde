@@ -4,9 +4,9 @@ Serial mySerial;
 PrintWriter sensorDataOutput;
 PrintWriter manualChangeDataOutput;
 PrintWriter sendNotifOutput;
-String sensorDataFile = "SensorData_Day_0.txt";
-String manualChangeDataFile = "ManualChangeData_Day_0.txt";
-String sendNotifFile = "sendNotifications.txt";
+String sensorDataFile = "../SensorData_Day_0.txt";
+String manualChangeDataFile = "../ManualChangeData_Day_0.txt";
+String sendNotifFile = "../sendNotifications.txt";
 boolean isTrue = true;
 
 void setup() {
@@ -22,7 +22,7 @@ void draw() {
          isTrue = false;
          if ( value != null ) {
            String[] fileDirectory = new String[2];
-           fileDirectory[0] = "";
+           fileDirectory[0] = "../";
            
            if (value.charAt(0) == '0') {
              sensorDataOutput.println(value.substring(1));

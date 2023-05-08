@@ -165,6 +165,9 @@ void setup() {
   // Resets the save file names
   Serial.println(sensorDataFile);
   Serial.println(manualChangeDataFile);
+
+  // Makes the window initially open
+  openWindow();
 }
 
 void loop() {
