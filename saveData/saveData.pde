@@ -7,10 +7,9 @@ PrintWriter sendNotifOutput;
 String sensorDataFile = "../SensorData_Day_0.txt";
 String manualChangeDataFile = "../ManualChangeData_Day_0.txt";
 String sendNotifFile = "../sendNotifications.txt";
-boolean isTrue = true;
 
 void setup() {
-   mySerial = new Serial( this, Serial.list()[0], 9600 );
+   mySerial = new Serial(this, "Arduino Uno", 9600);
    sensorDataOutput = createWriter(sensorDataFile);
    manualChangeDataOutput = createWriter(manualChangeDataFile);
    sendNotifOutput = createWriter(sendNotifFile);
@@ -19,7 +18,6 @@ void setup() {
 void draw() {
     if (mySerial.available() > 0 ) {
          String value = mySerial.readString();
-         isTrue = false;
          if ( value != null ) {
            String[] fileDirectory = new String[2];
            fileDirectory[0] = "../";
