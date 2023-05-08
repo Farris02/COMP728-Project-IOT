@@ -4,9 +4,10 @@ Serial mySerial;
 PrintWriter sensorDataOutput;
 PrintWriter manualChangeDataOutput;
 PrintWriter sendNotifOutput;
-String sensorDataFile = "SensorData_Day_0.txt";
-String manualChangeDataFile = "ManualChangeData_Day_0.txt";
-String sendNotifFile = "sendNotifications.txt";
+String sensorDataFile = "../SensorData_Day_0.txt";
+String manualChangeDataFile = "../ManualChangeData_Day_0.txt";
+String sendNotifFile = "../sendNotifications.txt";
+boolean isTrue = true;
 
 void setup() {
    mySerial = new Serial( this, Serial.list()[0], 9600 );
@@ -18,9 +19,10 @@ void setup() {
 void draw() {
     if (mySerial.available() > 0 ) {
          String value = mySerial.readString();
+         isTrue = false;
          if ( value != null ) {
            String[] fileDirectory = new String[2];
-           fileDirectory[0] = "";
+           fileDirectory[0] = "../";
            
            if (value.charAt(0) == '0') {
              sensorDataOutput.println(value.substring(1));
@@ -32,16 +34,17 @@ void draw() {
              fileDirectory[1] = value.substring(1);
              sensorDataOutput.flush();
              sensorDataOutput.close();
-             sensorDataOutput = createWriter(join(fileDirectory));
+             sensorDataOutput = createWriter(join(fileDirectory, '\0'));
            } else if (value.charAt(0) == '3') {
              fileDirectory[1] = value.substring(1);
              manualChangeDataOutput.flush();
              manualChangeDataOutput.close();
-             manualChangeDataOutput = createWriter(join(fileDirectory));
+             manualChangeDataOutput = createWriter(join(fileDirectory, '\0'));
            } else {
              sendNotifOutput.println(value);
              sendNotifOutput.flush();
            }
+        }
     }
 }
 

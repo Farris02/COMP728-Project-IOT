@@ -10,6 +10,7 @@ def sendNotifications(message):
     client = boto3.client('sns',aws_access_key_id=access_key,aws_secret_access_key=secret_key, region_name=region)
     response = client.publish(TopicArn=topic_arn, Message=message)
     print(response)
+    print(message)
 
 def loop():
     while True:
@@ -18,16 +19,14 @@ def loop():
         try:
             notifications = file.readlines()
             if (len(notifications) != 0) :
-                for line in notifications:
+                for line in notifications :
                     sendNotifications(line)
                     sentNotifs = True
-                    print(line.rstrip())
         finally:
             file.close()
             if (sentNotifs) :
-                file = open('sendNotifications.txt', 'w')
                 try:
-                    one = 1 # Does nothing. This is just to prevent compilation errors.
+                    file = open('sendNotifications.txt', 'w')
                 finally:
                     file.close()
             
@@ -37,4 +36,4 @@ if __name__ == "__main__":
     try:
         loop()
     except KeyboardInterrupt:
-        one = 1 # Also nothing
+        one = 1 # Does nothing
