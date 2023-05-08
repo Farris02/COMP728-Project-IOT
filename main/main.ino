@@ -37,7 +37,8 @@ int raindropValue; // Detects if it is raining. 1 is not raining, 0 is raining.
 int dayCount = 0; // Keeps track of the number of days passed since the start of the program.
 
 // Constants
-const unsigned long ADAY = 86400000;
+//const unsigned long ADAY = 86400000;
+const unsigned long ADAY = 600000;
 const unsigned long HALFANHOUR = 1800000;
 const unsigned long FIVEMINUTES = 300000;
 
