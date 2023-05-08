@@ -21,7 +21,7 @@ void draw() {
          if ( value != null ) {
            String[] fileDirectory = new String[2];
            fileDirectory[0] = "../";
-           
+           println(value);
            if (value.charAt(0) == '0') {
              sensorDataOutput.println(value.substring(1));
              sensorDataOutput.flush();
