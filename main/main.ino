@@ -140,6 +140,11 @@ bool sendMessage(String message) {
 // Saves the sensor data to an external text file.
 void saveSensorData(int rainData, float temperatureData, float humidityData) {
   String outputString = "0";
+  if (currentWindowIsClosedStatus) {
+    outputString.concat("Window Closed: Yes, ");
+  } else {
+    outputString.concat("Window Closed: No, ");
+  }
   outputString.concat("Temperature: ");
   outputString.concat(temperatureValue);
   outputString.concat(", Humidity: ");
