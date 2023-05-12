@@ -4,13 +4,14 @@
 #include <Arduino.h>
 
 // Pins.
-int manualWindowButton = 7;           // Pin 7 is the pin for the manual window change button.
-int raindropSensor = 11;  // Pin 11 is the pin for the raindrop sensor.
-int humitureSensor = 12;  // Pin 12 is the pin for the humiture sensor.
-int infraredSensor = 13;  // Pin 13 is the pin for the infrared sensor.
-int In1 = 8;              // Pin 8 is the pin for the motor.
-int In2 = 9;              // Pin 9 is the pin for the motor.
-int enablePin = 10;       // Pin 10 is the pin for the motor.
+int manualWindowButton = 13;  // Pin 13 is the pin for the manual window change button.
+int humitureSensor = 12;      // Pin 12 is the pin for the humiture sensor.
+int raindropSensor = 11;      // Pin 11 is the pin for the raindrop sensor.
+int enablePin = 10;           // Pin 10 is the pin for the motor.
+int In2 = 9;                  // Pin 9 is the pin for the motor.
+int In1 = 8;                  // Pin 8 is the pin for the motor.
+int closeInfraredSensor = 7;  // Pin 7 is the pin for the close infrared sensor.
+int openInfraredSensor = 6;   // Pin 6 is the pin for the open infrared sensor.
 
 // Setting up the save data functionality.
 String sensorDataFile = "2SensorData_Day_0.txt";
@@ -34,15 +35,15 @@ bool hasSentTemperatureMessage = false;   // Has a message about temperature lev
 float temperatureValue;                   // Temperature of area in celcius.
 float humidityValue;                      // Humidity of area in percentage.
 int raindropValue;                        // Detects if it is raining. 1 is not raining, 0 is raining.
-int manualWindowButtonValue;                          // Detects if the manual window change button is being pressed.
+int manualWindowButtonValue;              // Detects if the manual window change button is being pressed.
 int dayCount = 0;                         // Keeps track of the number of days passed since the start of the program.
 int currentWindowPeriod = 0;              // The current 20-minute period of the day;
-unsigned long adjustedCurrentTime = 0; // Used to make sure overflow errors do not occur.
+unsigned long adjustedCurrentTime = 0;    // Used to make sure overflow errors do not occur.
 
 // Constants.
-const unsigned long ADAY = 900000;       //86400000;
-const unsigned long HALFANHOUR = 18750;  //1800000;
-const unsigned long FIVEMINUTES = 3125;  //300000;
+const unsigned long ADAY = 1800000;      //86400000;
+const unsigned long HALFANHOUR = 37500;  //1800000;
+const unsigned long FIVEMINUTES = 6250;  //300000;
 
 // Day array.
 char days[7][72];                    // Array of 20 minute periods for 7 days.
@@ -61,16 +62,15 @@ bool closeWindow() {
 
   if (!currentWindowClosedStatus) {
     // Turns on the motor for a period of time.
-    for (int i = 128; i < 150; i++) {
+    digitalWrite(In1, HIGH);
+    digitalWrite(In2, LOW);
+    analogWrite(enablePin, 150);
+
+    for (;;) {
       // Ensures the motor doesn't run excessively.
-      if (digitalRead(infraredSensor) == 0) { // Detects if the window is closed. 1 is not closed, 0 is closed.
+      if (digitalRead(closeInfraredSensor) == 0) {  // Detects if the window is closed. 1 is not closed, 0 is closed.
         break;
       }
-
-      digitalWrite(In1, HIGH);
-      digitalWrite(In2, LOW);
-      analogWrite(enablePin, i);
-      delay(200);
     }
 
     // Turns off the motor.
@@ -99,11 +99,15 @@ bool openWindow() {
 
   if (currentWindowClosedStatus) {
     // Turns on the motor for a period of time.
-    for (int i = 128; i < 150; i++) {
-      digitalWrite(In1, LOW);
-      digitalWrite(In2, HIGH);
-      analogWrite(enablePin, i);
-      delay(200);
+    digitalWrite(In1, LOW);
+    digitalWrite(In2, HIGH);
+    analogWrite(enablePin, i);
+
+    for (;;) {
+      // Ensures the motor doesn't run excessively.
+      if (digitalRead(openInfraredSensor) == 0) {  // Detects if the window is open. 1 is not open, 0 is open.
+        break;
+      }
     }
 
     // Turns off the motor.
@@ -346,7 +350,7 @@ void loop() {
         hasSentHumidityMessage = true;
       }
     } else if (startWaitHumidityTime < adjustedCurrentTime) {  // If a message has been sent, and it's been 5 minutes since the last check.
-      if (humidityValue < 85 && humidityValue > 15) {                  // If the humidity is normal, reset values.
+      if (humidityValue < 85 && humidityValue > 15) {          // If the humidity is normal, reset values.
         hasSentHumidityMessage = false;
         startWaitHumidityTime = 0;
       } else {  // If humidity is not normal, check again in 5 minutes.
@@ -367,7 +371,7 @@ void loop() {
         hasSentTemperatureMessage = true;
       }
     } else if (startWaitTemperatureTime < adjustedCurrentTime) {  // If a message has been sent, and it's been 5 minutes since the last check.
-      if (temperatureValue < 30 && temperatureValue > 10) {               // If the temperature is normal, reset values.
+      if (temperatureValue < 30 && temperatureValue > 10) {       // If the temperature is normal, reset values.
         hasSentTemperatureMessage = false;
         startWaitTemperatureTime = 0;
       } else {  // If temperature is not normal, check again in 5 minutes.
