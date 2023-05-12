@@ -141,11 +141,11 @@ bool sendMessage(String message) {
 void saveSensorData(int rainData, float temperatureData, float humidityData) {
   String outputString = "0";
   if (currentWindowIsClosedStatus) {
-    outputString.concat("Window Closed: Yes, ");
+    outputString.concat("Window Closed: Yes");
   } else {
-    outputString.concat("Window Closed: No, ");
+    outputString.concat("Window Closed: No");
   }
-  outputString.concat("Temperature: ");
+  outputString.concat(", Temperature: ");
   outputString.concat(temperatureValue);
   outputString.concat(", Humidity: ");
   outputString.concat(humidityValue);
