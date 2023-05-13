@@ -140,7 +140,7 @@ bool sendMessage(String message) {
 // Saves the sensor data to an external text file.
 void saveSensorData(int rainData, float temperatureData, float humidityData) {
   String outputString = "0";
-  if (currentWindowIsClosedStatus) {
+  if (currentWindowClosedStatus) {
     outputString.concat("Window Closed: Yes");
   } else {
     outputString.concat("Window Closed: No");
@@ -161,9 +161,9 @@ void saveSensorData(int rainData, float temperatureData, float humidityData) {
 }
 
 // Saves the time and date to an external text file. Is called when the state of the window is manually changed.
-void saveManualWindowChangeData(bool currentWindowIsClosedStatus) {
+void saveManualWindowChangeData(bool currentWindowClosedStatus) {
   String outputString = "1";
-  if (currentWindowIsClosedStatus) {
+  if (currentWindowClosedStatus) {
     outputString.concat("Window Closed: Yes");
   } else {
     outputString.concat("Window Closed: No");
