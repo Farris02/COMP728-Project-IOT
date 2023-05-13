@@ -64,7 +64,7 @@ bool closeWindow() {
     // Turns on the motor for a period of time.
     digitalWrite(In1, HIGH);
     digitalWrite(In2, LOW);
-    analogWrite(enablePin, 150);
+    analogWrite(enablePin, 250);
 
     for (;;) {
       // Ensures the motor doesn't run excessively.
@@ -101,7 +101,7 @@ bool openWindow() {
     // Turns on the motor for a period of time.
     digitalWrite(In1, LOW);
     digitalWrite(In2, HIGH);
-    analogWrite(enablePin, i);
+    analogWrite(enablePin, 250);
 
     for (;;) {
       // Ensures the motor doesn't run excessively.
