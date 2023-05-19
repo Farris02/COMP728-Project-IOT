@@ -12,6 +12,10 @@ def sendNotifications(message):
   print(response)
   print(message)
 
+# Sending data to AWS
+def sendData(data) :
+  one = 1 # Add Code Here
+
 # Continuously checks the sendNotifications file for any new notifications
 def loop():
     while True:
@@ -35,7 +39,25 @@ def loop():
                     file = open('sendNotifications.txt', 'w')
                 finally:
                     file.close()
-            
+
+        try:
+            sentData = False
+            # Opens and read the sendData file
+            file = open('sendData.txt', 'r')
+            data = file.read()
+            # If there's something in the sendNotifications file
+            if (len(notifications) != 0) :
+                sendData(data)
+                sentData = True
+        finally:
+            file.close()
+            # If data has been sent, clear the sendData file
+            if (sentData) :
+                try:
+                    file = open('sendData.txt', 'w')
+                finally:
+                    file.close()
+        
         time.sleep(0.5)
 
 if __name__ == "__main__":

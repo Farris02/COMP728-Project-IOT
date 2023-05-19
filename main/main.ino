@@ -41,9 +41,9 @@ int currentWindowPeriod = 0;              // The current 20-minute period of the
 unsigned long adjustedCurrentTime = 0;    // Used to make sure overflow errors do not occur.
 
 // Constants.
-const unsigned long ADAY = 1800000;      //86400000;
-const unsigned long HALFANHOUR = 37500;  //1800000;
-const unsigned long FIVEMINUTES = 6250;  //300000;
+const unsigned long ADAY = 86400000;//1800000;      //86400000;
+const unsigned long HALFANHOUR = 1800000;//37500;  //1800000;
+const unsigned long FIVEMINUTES = 300000;//6250;  //300000;
 
 // Day array.
 char days[7][72];                    // Array of 20 minute periods for 7 days.
@@ -57,14 +57,14 @@ bool closeWindow() {
 
   // Sets up the motor.
   digitalWrite(enablePin, HIGH);
-  analogWrite(In1, HIGH);
   analogWrite(In2, LOW);
+  analogWrite(In1, HIGH);
 
   if (!currentWindowClosedStatus) {
     // Turns on the motor for a period of time.
     digitalWrite(In1, HIGH);
     digitalWrite(In2, LOW);
-    analogWrite(enablePin, 150);
+    analogWrite(enablePin, 1000);
 
     for (;;) {
       // Ensures the motor doesn't run excessively.
@@ -101,7 +101,7 @@ bool openWindow() {
     // Turns on the motor for a period of time.
     digitalWrite(In1, LOW);
     digitalWrite(In2, HIGH);
-    analogWrite(enablePin, i);
+    analogWrite(enablePin, 1000);
 
     for (;;) {
       // Ensures the motor doesn't run excessively.
@@ -127,7 +127,7 @@ bool openWindow() {
 // Sends the argument given as a message to the user's phone. Returns true if successful. Else returns false.
 // Message given must not contain 0, 1, 2, or 3 at the beginning of the message.
 bool sendMessage(String message) {
-  if (message != "" || message != NULL || message.charAt(0) == '0' || message.charAt(0) == '1' || message.charAt(0) == '2' || message.charAt(0) == '3') {
+  if (message != "" && message != NULL && message.charAt(0) != '0' && message.charAt(0) != '1' && message.charAt(0) != '2' && message.charAt(0) != '3' && message.charAt(0) != '4') {
     Serial.println(message);
     delay(1000);
 
@@ -140,24 +140,35 @@ bool sendMessage(String message) {
 // Saves the sensor data to an external text file.
 void saveSensorData(int rainData, float temperatureData, float humidityData) {
   String outputString = "0";
+  String sendDataString = "4";
   if (currentWindowClosedStatus) {
     outputString.concat("Window Closed: Yes");
+    sendDataString.concat("1 ");
   } else {
     outputString.concat("Window Closed: No");
+    sendDataString.concat("0 ");
   }
   outputString.concat(", Temperature: ");
   outputString.concat(temperatureValue);
+  sendDataString.concat(temperatureValue);
+  sendDataString.concat(" ");
   outputString.concat(", Humidity: ");
   outputString.concat(humidityValue);
+  sendDataString.concat(humidityValue);
   if (rainData == 0) {
     outputString.concat(", Raining: Yes");
+    sendDataString.concat(" 0");
   } else {
     outputString.concat(", Raining: No");
+    sendDataString.concat(" 1");
   }
   outputString.concat(", Time since start: ");
   outputString.concat(currentTime);
+  sendDataString.concat(currentTime);
+  sendDataString.concat(", ");
 
   Serial.println(outputString);
+  Serial.println(sendDataString);
 }
 
 // Saves the time and date to an external text file. Is called when the state of the window is manually changed.
@@ -341,47 +352,47 @@ void loop() {
       sendMessage("Not raining. Opening Window.");
       openWindow();
     }
+  }
 
-    // Regular Humiture Logic.
-    adjustedCurrentTime = adjustCurrentTime(FIVEMINUTES);
-    if (!hasSentHumidityMessage) {
-      if (humidityValue > 90) {  // If the humidity is greater than 90% send a message.
-        sendMessage("Current Humidity greater than 90%! Please turn on your air conditioning.");
-        startWaitHumidityTime = currentTime;
-        hasSentHumidityMessage = true;
-      } else if (humidityValue < 10) {  // If the humidity is less than 10% send a message.
-        sendMessage("Current Humidity less than 10%! Please turn on your air conditioning.");
-        startWaitHumidityTime = currentTime;
-        hasSentHumidityMessage = true;
-      }
-    } else if (startWaitHumidityTime < adjustedCurrentTime) {  // If a message has been sent, and it's been 5 minutes since the last check.
-      if (humidityValue < 85 && humidityValue > 15) {          // If the humidity is normal, reset values.
-        hasSentHumidityMessage = false;
-        startWaitHumidityTime = 0;
-      } else {  // If humidity is not normal, check again in 5 minutes.
-        startWaitHumidityTime = currentTime;
-      }
+  // Regular Humiture Logic.
+  adjustedCurrentTime = adjustCurrentTime(FIVEMINUTES);
+  if (!hasSentHumidityMessage) {
+    if (humidityValue > 90) {  // If the humidity is greater than 90% send a message.
+      sendMessage("Current Humidity greater than 90%! Please turn on your air conditioning.");
+      startWaitHumidityTime = currentTime;
+      hasSentHumidityMessage = true;
+    } else if (humidityValue < 10) {  // If the humidity is less than 10% send a message.
+      sendMessage("Current Humidity less than 10%! Please turn on your air conditioning.");
+      startWaitHumidityTime = currentTime;
+      hasSentHumidityMessage = true;
     }
+  } else if (startWaitHumidityTime < adjustedCurrentTime) {  // If a message has been sent, and it's been 5 minutes since the last check.
+    if (humidityValue < 85 && humidityValue > 15) {          // If the humidity is normal, reset values.
+      hasSentHumidityMessage = false;
+      startWaitHumidityTime = 0;
+    } else {  // If humidity is not normal, check again in 5 minutes.
+      startWaitHumidityTime = currentTime;
+    }
+  }
 
-    // Regular Temperature Logic.
-    adjustedCurrentTime = adjustCurrentTime(FIVEMINUTES);
-    if (!hasSentTemperatureMessage) {
-      if (temperatureValue > 35) {  // If the temperature is greater than 90% send a message.
-        sendMessage("Current Temperature greater than 30 Degrees Celcius! Please turn on your air conditioning.");
-        startWaitTemperatureTime = currentTime;
-        hasSentTemperatureMessage = true;
-      } else if (temperatureValue < 5) {  // If the temperature is less than 10% send a message.
-        sendMessage("Current Temperature less than 5 Degrees Celcius! Please turn on your air conditioning.");
-        startWaitTemperatureTime = currentTime;
-        hasSentTemperatureMessage = true;
-      }
-    } else if (startWaitTemperatureTime < adjustedCurrentTime) {  // If a message has been sent, and it's been 5 minutes since the last check.
-      if (temperatureValue < 30 && temperatureValue > 10) {       // If the temperature is normal, reset values.
-        hasSentTemperatureMessage = false;
-        startWaitTemperatureTime = 0;
-      } else {  // If temperature is not normal, check again in 5 minutes.
-        startWaitTemperatureTime = currentTime;
-      }
+  // Regular Temperature Logic.
+  adjustedCurrentTime = adjustCurrentTime(FIVEMINUTES);
+  if (!hasSentTemperatureMessage) {
+    if (temperatureValue > 35) {  // If the temperature is greater than 90% send a message.
+      sendMessage("Current Temperature greater than 30 Degrees Celcius! Please turn on your air conditioning.");
+      startWaitTemperatureTime = currentTime;
+      hasSentTemperatureMessage = true;
+    } else if (temperatureValue < 5) {  // If the temperature is less than 10% send a message.
+      sendMessage("Current Temperature less than 5 Degrees Celcius! Please turn on your air conditioning.");
+      startWaitTemperatureTime = currentTime;
+      hasSentTemperatureMessage = true;
+    }
+  } else if (startWaitTemperatureTime < adjustedCurrentTime) {  // If a message has been sent, and it's been 5 minutes since the last check.
+    if (temperatureValue < 30 && temperatureValue > 10) {       // If the temperature is normal, reset values.
+      hasSentTemperatureMessage = false;
+      startWaitTemperatureTime = 0;
+    } else {  // If temperature is not normal, check again in 5 minutes.
+      startWaitTemperatureTime = currentTime;
     }
   }
 
