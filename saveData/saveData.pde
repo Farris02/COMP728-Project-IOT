@@ -4,17 +4,19 @@ Serial mySerial;
 PrintWriter sensorDataOutput;
 PrintWriter manualChangeDataOutput;
 PrintWriter sendNotifOutput;
+PrintWriter sendDataOutput;
 String sensorDataFile = "../SensorData_Day_0.txt";
 String manualChangeDataFile = "../ManualChangeData_Day_0.txt";
 String sendNotifFile = "../sendNotifications.txt";
+String sendDataFile = "../sendData.txt";
 boolean started = false;
-
 
 void setup() {
    mySerial = new Serial( this, Serial.list()[0], 9600 );
    sensorDataOutput = createWriter(sensorDataFile);
    manualChangeDataOutput = createWriter(manualChangeDataFile);
    sendNotifOutput = createWriter(sendNotifFile);
+   sendDataOutput = createWriter(sendDataFile);
 }
 
 void draw() {
@@ -56,6 +58,9 @@ void draw() {
              manualChangeDataOutput.flush();
              manualChangeDataOutput.close();
              manualChangeDataOutput = createWriter(join(fileDirectory, '/'));
+           } else if (value.charAt(0) == '4') { // Prints the data in the Send Data file.
+             sendDataOutput.print(value.substring(1, value.length()-1));
+             sendDataOutput.flush();
            } else if (started) { // Outputs the data into the Send Notification file.
              sendNotifOutput.print(value);
              sendNotifOutput.flush();
