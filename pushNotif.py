@@ -4,10 +4,10 @@ import json
 
 # Pushing notifications to User
 def sendNotifications(message):
-  access_key = 'AKIA5QGOG4BAVSIS4GHD'
-  secret_key = '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'
+  access_key = 'AKIAU4CW534CO3WDPKVL'
+  secret_key = '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'
   region = 'ap-southeast-2'
-  topic_arn = 'arn:aws:sns:ap-southeast-2:928145399873:Push-Notifications-IOT'
+  topic_arn = 'arn:aws:sns:ap-southeast-2:335189761796:push_notifs'
   client = boto3.client('sns',aws_access_key_id= access_key, aws_secret_access_key = secret_key,region_name = region)
   response = client.publish(TopicArn = topic_arn, Message = message)
   print(response)
