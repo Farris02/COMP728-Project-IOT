@@ -141,9 +141,9 @@ bool sendMessage(String message) {
 void saveSensorData(int rainData, float temperatureData, float humidityData) {
   String outputString = "0";
   if (currentWindowClosedStatus) {
-    outputString.concat("Window Closed: Yes");
+    outputString.concat("Window_Closed: Yes");
   } else {
-    outputString.concat("Window Closed: No");
+    outputString.concat("Window_Closed: No");
   }
   outputString.concat(", Temperature: ");
   outputString.concat(temperatureValue);
@@ -154,7 +154,7 @@ void saveSensorData(int rainData, float temperatureData, float humidityData) {
   } else {
     outputString.concat(", Raining: No");
   }
-  outputString.concat(", Time since start: ");
+  outputString.concat(", Time_since_start: ");
   outputString.concat(currentTime);
 
   Serial.println(outputString);
