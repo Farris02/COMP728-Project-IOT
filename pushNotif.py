@@ -61,7 +61,7 @@ def sendData(file_path):
 # Continuously checks the sendNotifications file for any new notifications
 def loop():
     # Sets up the initial variables
-    startTime = time.time()
+    startTime = time.time() + 10 # 10 Second grace period to start the other scripts
     currentTime = startTime
     currentDay = 0
 
