@@ -14,7 +14,7 @@ def sendNotifications(message):
   print(message)
 
 # Sending data to AWS
-def sendData(file_path,channel_name):
+def sendData(file_path, channel_name):
   # Create an IoT Analytics client
   client = boto3.client('iotanalytics', region_name='ap-southeast-2', aws_access_key_id='AKIA5QGOG4BAVSIS4GHD',
                         aws_secret_access_key='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')
@@ -89,7 +89,8 @@ def loop():
 
         if (currentTime >= (startTime + 86400)) :
             startTime += 86400;
-            sendData("SensorData_Day_" + str(currentDay) + ".txt")
+            channel = "iot_channel" + str((currentDay % 7) + 1)
+            sendData("SensorData_Day_" + str(currentDay) + ".txt", channel)
             currentDay += 1
 
         currentTime = time.time()
