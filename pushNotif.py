@@ -14,7 +14,7 @@ def sendNotifications(message):
   print(message)
 
 # Sending data to AWS
-def sendData(file_path):
+def sendData(file_path,channel_name):
   # Create an IoT Analytics client
   client = boto3.client('iotanalytics', region_name='ap-southeast-2', aws_access_key_id='AKIA5QGOG4BAVSIS4GHD',
                         aws_secret_access_key='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')
@@ -47,7 +47,7 @@ def sendData(file_path):
 
           # Send the message to AWS IoT Analytics
           response = client.batch_put_message(
-              channelName='iot_window',
+              channelName=channel_name,
               messages=[
                   {
                       'messageId': '1',
