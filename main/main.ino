@@ -140,35 +140,24 @@ bool sendMessage(String message) {
 // Saves the sensor data to an external text file.
 void saveSensorData(int rainData, float temperatureData, float humidityData) {
   String outputString = "0";
-  String sendDataString = "4";
   if (currentWindowClosedStatus) {
     outputString.concat("Window Closed: Yes");
-    sendDataString.concat("1 ");
   } else {
     outputString.concat("Window Closed: No");
-    sendDataString.concat("0 ");
   }
   outputString.concat(", Temperature: ");
   outputString.concat(temperatureValue);
-  sendDataString.concat(temperatureValue);
-  sendDataString.concat(" ");
   outputString.concat(", Humidity: ");
   outputString.concat(humidityValue);
-  sendDataString.concat(humidityValue);
   if (rainData == 0) {
     outputString.concat(", Raining: Yes");
-    sendDataString.concat(" 0");
   } else {
     outputString.concat(", Raining: No");
-    sendDataString.concat(" 1");
   }
   outputString.concat(", Time since start: ");
   outputString.concat(currentTime);
-  sendDataString.concat(currentTime);
-  sendDataString.concat(", ");
 
   Serial.println(outputString);
-  Serial.println(sendDataString);
 }
 
 // Saves the time and date to an external text file. Is called when the state of the window is manually changed.
