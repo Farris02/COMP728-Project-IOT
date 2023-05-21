@@ -89,8 +89,7 @@ def loop():
 
         if (currentTime >= (startTime + 86400)) :
             startTime += 86400;
-            channel = "iot_channel" + str((currentDay % 7) + 1)
-            sendData("SensorData_Day_" + str(currentDay) + ".txt", channel)
+            sendData("SensorData_Day_" + str(currentDay) + ".txt", "data")
             currentDay += 1
 
         currentTime = time.time()
