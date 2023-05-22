@@ -41,9 +41,9 @@ int currentWindowPeriod = 0;              // The current 20-minute period of the
 unsigned long adjustedCurrentTime = 0;    // Used to make sure overflow errors do not occur.
 
 // Constants.
-const unsigned long ADAY = 86400000;//1800000;      //86400000;
-const unsigned long HALFANHOUR = 1800000;//37500;  //1800000;
-const unsigned long FIVEMINUTES = 300000;//6250;  //300000;
+const unsigned long ADAY = 180000;       //86400000;
+const unsigned long HALFANHOUR = 3750;   //1800000;
+const unsigned long FIVEMINUTES = 3000;  //300000;
 
 // Day array.
 char days[7][72];                    // Array of 20 minute periods for 7 days.
@@ -261,6 +261,11 @@ void setup() {
     days[0][i] = '0';
   }
 
+  // Clears buffer
+  while(Serial.available()) {
+	  char getData = Serial.read();
+  }
+
   // Start the new data on a new line
   Serial.println("");
 
@@ -272,6 +277,12 @@ void setup() {
 
   // Makes the window initially open
   openWindow();
+
+  // Demo Values
+  permanentChange[18] = '2'; // Closed at 6 in the morning
+  permanentChange[21] = '1'; // Open at 7 in the morning
+  permanentChange[24] = '2'; // Close at 8 in the morning
+  permanentChange[27] = '1'; // Open at 9 in the morning
 }
 
 void loop() {
